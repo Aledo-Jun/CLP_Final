@@ -13,6 +13,21 @@ import time
 from copy import deepcopy
 
 
+def get_multi_excited_state(
+     Hamiltonian: list[npt.NDArray],
+     NKeep: int,
+     NSweep: int,
+     iterative_diag: bool = True,
+     two_site: bool = True,
+     Krylov_bases: int = 5,
+     Lanczos_cutoff: float = 1e-4,
+     num_excited_state: int = 0,
+     verbose: bool = False,
+):
+     
+     return 0
+
+
 def DMRG(
      Hamiltonian: list[npt.NDArray],
      NKeep: int,
@@ -23,8 +38,8 @@ def DMRG(
      Lanczos_cutoff: float = 1e-4,
      orthogonal_to_list_of_MPS: list[list[npt.NDArray]] | None = None,
      verbose: bool = False,
-     bk: Backend = Backend('auto'),
      tol: float = 1e-6,
+     bk: Backend = Backend('auto')
 ) -> tuple[npt.NDArray, npt.NDArray, list]:
 
      """
@@ -47,7 +62,7 @@ def DMRG(
      n_sites = len(Hamiltonian)
      
      if verbose:
-          print(f"L={n_sites} | {NKeep=} | {NSweep=} | diag={iterative_diag} | two={two_site} | Krylov={Krylov_bases} | cutoff={Lanczos_cutoff}")
+          print(f"L={n_sites} | {NKeep=} | {NSweep=} | iterative={iterative_diag} | {two_site=} | {Krylov_bases=} | {Lanczos_cutoff=}")
 
      """
      initial MPS is automatically normalized
@@ -57,16 +72,11 @@ def DMRG(
           MPS = Iterative_diagonalization(
                Hamiltonian=Hamiltonian, NKeep=NKeep, bk=bk
           )
-          if verbose:
-               print(f"Iterative diagonalization complete")
           
      else:
           MPS = random_initialization(
                Hamiltonian=Hamiltonian, NKeep=NKeep, bk=bk
           )
-          if verbose:
-               print(f"Random initialization complete")
-     
      
      # Verify MPS normalization
      norm = MPS_MPS_overlap(MPS, MPS, bk=bk)
@@ -137,8 +147,8 @@ def DMRG(
                     orthogonal_to_list_of_MPS = orthogonal_to_list_of_MPS,
                     bk = bk
                )
-          
-          last_energy = deepcopy(total_energies[-1])
+
+          last_energy = total_energies[-1]
           
           total_energies.extend(energies)
           if iter > 0:
@@ -148,10 +158,10 @@ def DMRG(
           
           if verbose:
                print(f"iter={iter+1} | energy={round_sig(np.real(energies[-1]), 8)} | time={round_sig(times[-1], 3)}s")
-          
-          if np.abs(last_energy - total_energies[-1]) < tol:
+
+          if bk.xp.abs(last_energy.real - total_energies[-1].real) < tol:
                break
-     
+
      total_energies = bk.array(total_energies)
      times = bk.array(times)
      
